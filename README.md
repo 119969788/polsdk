@@ -80,6 +80,8 @@ npm run dev
 
 ### 生产模式运行
 
+#### 方式一：直接运行
+
 ```bash
 # 1. 编译 TypeScript
 npm run build
@@ -87,6 +89,24 @@ npm run build
 # 2. 运行编译后的程序
 npm start
 ```
+
+#### 方式二：使用 PM2（推荐生产环境）
+
+```bash
+# 1. 编译项目
+npm run build
+
+# 2. 使用 PM2 启动
+pm2 start ecosystem.config.js
+
+# 3. 查看状态
+pm2 status
+
+# 4. 查看日志
+pm2 logs polsdk-bot
+```
+
+详细 PM2 使用说明请查看：[PM2_USAGE.md](PM2_USAGE.md)
 
 ## 配置说明
 
@@ -169,10 +189,13 @@ polsdk/
 ├── src/
 │   ├── index.ts      # 主程序入口
 │   ├── config.ts     # 配置加载
-│   └── logger.ts     # 日志工具
+│   ├── logger.ts     # 日志工具
+│   └── types.ts      # 类型定义
 ├── dist/             # 编译输出（自动生成）
+├── logs/             # PM2 日志目录（自动生成）
 ├── package.json      # 项目配置
 ├── tsconfig.json     # TypeScript 配置
+├── ecosystem.config.js # PM2 配置文件
 ├── .env              # 环境变量（需要创建）
 └── README.md         # 说明文档
 ```
