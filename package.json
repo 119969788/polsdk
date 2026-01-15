@@ -1,0 +1,30 @@
+{
+  "name": "poly-trading-bot",
+  "version": "1.0.0",
+  "description": "Polymarket 跟单和15分钟市场策略套利程序",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "polymarket",
+    "trading",
+    "arbitrage",
+    "copy-trading"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@catalyst-team/poly-sdk": "^0.3.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
