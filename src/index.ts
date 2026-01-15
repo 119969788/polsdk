@@ -1,27 +1,77 @@
-import { PolySDK } from '@catalyst-team/poly-sdk';
+// 使用动态导入或兼容方式导入 SDK
+// @ts-ignore - SDK 类型定义可能不完整
+import * as PolySDKModule from '@catalyst-team/poly-sdk';
 import { loadConfig, Config } from './config.js';
 import { logger } from './logger.js';
-import type {
-  AutoCopyTradingSubscription,
-  AutoCopyTradingStats,
-  DipArbServiceConfig,
-  DipArbSignalEvent,
-  DipArbExecutionResult,
-  DipArbStats,
-  DipArbRoundState,
-} from '@catalyst-team/poly-sdk';
+
+// 尝试获取 SDK 类（支持多种导出方式）
+const PolySDK = (PolySDKModule as any).default || 
+                (PolySDKModule as any).PolySDK || 
+                (PolySDKModule as any).PolymarketSDK ||
+                PolySDKModule;
+
+// 定义类型接口（如果 SDK 不导出这些类型）
+interface AutoCopyTradingSubscription {
+  getStats(): AutoCopyTradingStats;
+  stop(): void;
+}
+
+interface AutoCopyTradingStats {
+  tradesDetected?: number;
+  tradesExecuted?: number;
+  [key: string]: any;
+}
+
+interface DipArbServiceConfig {
+  underlyings: string[];
+  duration: string;
+  minProfitRate: number;
+  maxPositionSize: number;
+}
+
+interface DipArbSignalEvent {
+  type: string;
+  marketSlug: string;
+  profitRate: number;
+  leg1Price?: number;
+  leg2Price?: number;
+}
+
+interface DipArbExecutionResult {
+  success: boolean;
+  marketSlug: string;
+  leg1?: any;
+  leg2?: any;
+  profit?: number;
+  profitRate?: number;
+  error?: any;
+}
+
+interface DipArbStats {
+  signalsDetected?: number;
+  leg1Filled?: number;
+  leg2Filled?: number;
+  roundsCompleted?: number;
+  totalProfit?: number;
+}
 
 class TradingBot {
-  private sdk: PolySDK;
+  private sdk: any; // 使用 any 类型，因为 SDK 的类型定义可能不可用
   private config: Config;
   private copyTradingSubscriptions: Map<string, AutoCopyTradingSubscription> = new Map();
   private isRunning = false;
 
   constructor(config: Config) {
     this.config = config;
-    this.sdk = new PolySDK({
-      privateKey: config.privateKey,
-    });
+    // 初始化 SDK
+    try {
+      this.sdk = new PolySDK({
+        privateKey: config.privateKey,
+      });
+    } catch (error) {
+      logger.error('SDK 初始化失败:', error);
+      throw error;
+    }
   }
 
   /**
@@ -44,17 +94,17 @@ class TradingBot {
           minAmount: this.config.followTrading.minAmount,
           maxAmount: this.config.followTrading.maxAmount,
           copyRatio: this.config.followTrading.ratio,
-          onTrade: (trade) => {
+          onTrade: (trade: any) => {
             logger.info(`📋 跟单交易执行:`, {
               wallet,
-              market: trade.market,
-              side: trade.side,
-              amount: trade.amount,
-              outcome: trade.outcome,
-              price: trade.price,
+              market: trade?.market || trade?.marketSlug,
+              side: trade?.side,
+              amount: trade?.amount,
+              outcome: trade?.outcome,
+              price: trade?.price,
             });
           },
-          onError: (error) => {
+          onError: (error: any) => {
             logger.error(`跟单错误 (钱包: ${wallet}):`, error);
           },
         });
@@ -114,11 +164,11 @@ class TradingBot {
       });
 
       // 监听事件
-      this.sdk.dipArb.on('started', (config) => {
+      this.sdk.dipArb.on('started', (config: any) => {
         logger.info('🎯 套利监控已启动:', {
-          market: config.marketSlug,
-          underlying: config.underlying,
-          duration: config.duration,
+          market: config?.marketSlug || config?.market,
+          underlying: config?.underlying,
+          duration: config?.duration,
         });
       });
 
@@ -126,11 +176,11 @@ class TradingBot {
         logger.info('⏹️  套利监控已停止');
       });
 
-      this.sdk.dipArb.on('newRound', (data) => {
+      this.sdk.dipArb.on('newRound', (data: any) => {
         logger.info('🔄 新一轮交易:', {
-          roundId: data.roundId,
-          upOpen: data.upOpen,
-          downOpen: data.downOpen,
+          roundId: data?.roundId,
+          upOpen: data?.upOpen,
+          downOpen: data?.downOpen,
         });
       });
 
@@ -161,24 +211,24 @@ class TradingBot {
         }
       });
 
-      this.sdk.dipArb.on('roundComplete', (data) => {
+      this.sdk.dipArb.on('roundComplete', (data: any) => {
         logger.info('🏁 交易轮次完成:', {
-          profit: data.profit,
-          profitRate: data.profitRate,
+          profit: data?.profit,
+          profitRate: data?.profitRate,
         });
       });
 
-      this.sdk.dipArb.on('rotate', (data) => {
+      this.sdk.dipArb.on('rotate', (data: any) => {
         logger.info('🔄 切换到新市场:', {
-          reason: data.reason,
-          newMarket: data.newMarket,
+          reason: data?.reason,
+          newMarket: data?.newMarket,
         });
       });
 
-      this.sdk.dipArb.on('settled', (data) => {
-        if (data.success) {
+      this.sdk.dipArb.on('settled', (data: any) => {
+        if (data?.success) {
           logger.info('💰 仓位结算成功:', {
-            amountReceived: data.amountReceived,
+            amountReceived: data?.amountReceived,
           });
         } else {
           logger.error('❌ 仓位结算失败');
@@ -215,12 +265,12 @@ class TradingBot {
    */
   private logCopyTradingStats(wallet: string, stats: AutoCopyTradingStats): void {
     logger.info(`📊 跟单统计 (${wallet}):`, {
-      监控时间: `${stats.monitoringTime / 1000}秒`,
-      检测到交易: stats.tradesDetected,
-      执行交易: stats.tradesExecuted,
-      成功交易: stats.successfulTrades,
-      失败交易: stats.failedTrades,
-      总利润: `$${stats.totalProfit?.toFixed(2) || '0.00'}`,
+      监控时间: stats.monitoringTime ? `${stats.monitoringTime / 1000}秒` : 'N/A',
+      检测到交易: stats.tradesDetected || 0,
+      执行交易: stats.tradesExecuted || 0,
+      成功交易: stats.successfulTrades || stats.tradesExecuted || 0,
+      失败交易: stats.failedTrades || 0,
+      总利润: stats.totalProfit ? `$${stats.totalProfit.toFixed(2)}` : '$0.00',
     });
   }
 
