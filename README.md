@@ -72,41 +72,62 @@ LOG_LEVEL=info                     # debug, info, warn, error
 
 ## 使用方法
 
-### 开发模式运行
+### 启动方式选择
+
+#### 方式一：同时启动所有功能
 
 ```bash
+# 开发模式
 npm run dev
-```
 
-### 生产模式运行
-
-#### 方式一：直接运行
-
-```bash
-# 1. 编译 TypeScript
+# 生产模式
 npm run build
-
-# 2. 运行编译后的程序
 npm start
 ```
 
-#### 方式二：使用 PM2（推荐生产环境）
+#### 方式二：分开启动两个功能（推荐）
+
+可以独立启动跟单功能和15分钟套利功能：
 
 ```bash
-# 1. 编译项目
+# 开发模式
+npm run dev:copy    # 只启动跟单功能
+npm run dev:arb     # 只启动15分钟套利功能
+
+# 生产模式
 npm run build
-
-# 2. 使用 PM2 启动
-pm2 start ecosystem.config.js
-
-# 3. 查看状态
-pm2 status
-
-# 4. 查看日志
-pm2 logs polsdk-bot
+npm run start:copy  # 只启动跟单功能
+npm run start:arb   # 只启动15分钟套利功能
 ```
 
-详细 PM2 使用说明请查看：[PM2_USAGE.md](PM2_USAGE.md)
+### 使用 PM2 管理（推荐生产环境）
+
+#### 同时启动所有功能
+
+```bash
+pm2 start ecosystem.config.json
+```
+
+#### 分开启动两个功能
+
+```bash
+# 启动跟单功能
+pm2 start ecosystem.config.copy.json
+
+# 启动15分钟套利功能
+pm2 start ecosystem.config.arb.json
+
+# 查看状态
+pm2 status
+
+# 查看日志
+pm2 logs polsdk-copy-trading  # 跟单功能日志
+pm2 logs polsdk-dip-arb       # 套利功能日志
+```
+
+详细说明请查看：
+- [SEPARATE_START.md](SEPARATE_START.md) - 分开启动详细指南
+- [PM2_USAGE.md](PM2_USAGE.md) - PM2 使用指南
 
 ## 配置说明
 

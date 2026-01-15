@@ -7,7 +7,11 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
+    "start:copy": "node dist/copy-trading.js",
+    "start:arb": "node dist/dip-arb.js",
     "dev": "tsx src/index.ts",
+    "dev:copy": "tsx src/copy-trading.ts",
+    "dev:arb": "tsx src/dip-arb.ts",
     "clean": "rm -rf dist"
   },
   "keywords": [
