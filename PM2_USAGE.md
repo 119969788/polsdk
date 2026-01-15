@@ -14,13 +14,30 @@ npm run build
 
 ### 2. 使用 PM2 启动程序
 
-```bash
-# 启动程序（使用配置文件）
-pm2 start ecosystem.config.js
+**最简单的方式**（推荐，无需配置文件）：
 
-# 或者直接启动
-pm2 start dist/index.js --name polsdk-bot
+```bash
+# 创建日志目录
+mkdir -p logs
+
+# 直接启动
+pm2 start dist/index.js --name polsdk-bot --log ./logs/out.log --error ./logs/err.log --time
 ```
+
+**或者使用配置文件**（如果文件存在）：
+
+```bash
+# 方法1：使用 JSON 配置文件
+pm2 start ecosystem.config.json
+
+# 方法2：使用 .cjs 配置文件
+pm2 start ecosystem.config.cjs
+```
+
+**如果找不到配置文件**，请使用上面的直接启动方式，或者手动创建配置文件（见下方说明）。
+
+**为什么不能使用 `.js` 文件？**  
+因为 `package.json` 中设置了 `"type": "module"`，`.js` 文件会被当作 ES 模块，而 PM2 配置文件需要使用 CommonJS 格式。
 
 ### 3. 查看运行状态
 
